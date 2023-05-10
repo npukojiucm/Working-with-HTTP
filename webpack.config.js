@@ -93,4 +93,35 @@ const task2 = {
   },
 };
 
-module.exports = [index, task2];
+const task3 = {
+  entry: './src/3-task/index.js',
+  output: {
+    path: path.resolve(__dirname, 'dist', '3-task'),
+    filename: 'index.js',
+  },
+
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './src/3-task/index.html',
+      filename: 'index.html',
+    }),
+    new MiniCssExtractPlugin({
+      filename: 'index.css',
+    }),
+  ],
+
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpe?g|gif|svg)/,
+        type: 'asset/resource',
+      },
+      {
+        test: /\.css$/i,
+        use: [MiniCssExtractPlugin.loader, 'css-loader'],
+      },
+    ],
+  },
+};
+
+module.exports = [index, task2, task3];

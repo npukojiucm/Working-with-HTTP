@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Drag&Drop and Server</title>
+</head>
+<body>
+    <div class="container">
+        <nav class="menu">
+            <button id="get-img" type="button" class="btn-menu get-img">
+                Получить картинки с сервера
+            </button>
+            <button id="back" type="button" class="btn-menu back non-visible">
+                Назад
+            </button>
+
+            <button id="upload-img" type="button" class="btn-menu upload-img">
+                Отправить
+            </button>
+        </nav>
+
+        <div class="server-img__list"></div>
+
+        <div class="file-container">
+            <label class="input-file">
+                <input type="file" multiple>
+                <span class="input-file-btn">Drag and Drop files here or Click to select</span>
+            </label>
+        </div>
+
+        <div class="preview-loads">
+        </div>
+    </div>
+</body>
+</html>

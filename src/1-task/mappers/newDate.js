@@ -15,7 +15,5 @@ module.exports.newDate = function newDate() {
     11: '12',
   };
 
-  return `
-    ${date.getDate()}.${month[date.getMonth()]}.${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}
-  `
-}
+  return `${date.getDate()}.${month[date.getMonth()]}.${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`;
+};
