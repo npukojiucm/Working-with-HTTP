@@ -1,3 +1,7 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-shadow */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable consistent-return */
 export default class ImgLoader {
   constructor(container) {
     this.container = document.querySelector(container);
@@ -10,13 +14,9 @@ export default class ImgLoader {
     this.fileContainer = this.container.querySelector('.file-container');
     this.input = this.container.querySelector('input');
 
-
     this.serverImgList = this.container.querySelector('.server-img__list');
 
-
-
     this.previewContainer = this.container.querySelector('.preview-loads');
-
 
     this.onDragOverFileContainer = this.onDragOverFileContainer.bind(this);
     this.onDropFileContainer = this.onDropFileContainer.bind(this);
@@ -27,15 +27,13 @@ export default class ImgLoader {
     this.onClickBtnBack = this.onClickBtnBack.bind(this);
 
     this.onClickBtnRemoveLoadItem = this.onClickBtnRemoveLoadItem.bind(this);
-
     this.onClickBtnConfirmDeleteFile = this.onClickBtnConfirmDeleteFile.bind(this);
   }
-
 
   start() {
     this.btnGetImg.addEventListener('click', this.onClickBtnGetImg);
     this.btnUploadImg.addEventListener('click', this.onClickBtnUploadFiles);
-    this.btnBack.addEventListener('click', this.onClickBtnBack)
+    this.btnBack.addEventListener('click', this.onClickBtnBack);
 
     this.fileContainer.addEventListener('drop', this.onDropFileContainer);
     this.fileContainer.addEventListener('dragover', this.onDragOverFileContainer);
@@ -46,23 +44,25 @@ export default class ImgLoader {
     const { name: fileName, size: fileSize, type: fileType } = file;
 
     const element = this.formData.has(fileName);
-  
+
     if (element) {
       if (element.name === fileName && element.type === !fileType) {
         this.formData.append(fileName, file, fileName);
-      }
-      if (element.name === fileName && element.type === fileType && element.size !== fileSize) {
+      } else if (
+        element.name === fileName && element.type === fileType && element.size !== fileSize) {
         this.formData.append(fileName, file, fileName);
+      } else {
+        return;
       }
     } else {
       this.formData.append(fileName, file, fileName);
     }
-  
+
     this.btnUploadImg.classList.add('visible');
-  
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
-  
+
     reader.onload = () => {
       previewContainer.insertAdjacentHTML('beforeend', `
         <div class="load-item" data-name="${fileName}">
@@ -70,10 +70,10 @@ export default class ImgLoader {
           <div class="load-item__close"></div>
         </div>
       `);
-  
+
       const child = previewContainer.children;
       const btnClose = child[child.length - 1].querySelector('.load-item__close');
-  
+
       btnClose.addEventListener('click', this.onClickBtnRemoveLoadItem);
     };
   }
@@ -91,10 +91,6 @@ export default class ImgLoader {
       `;
   }
 
-  
-
-  
-
   async onClickBtnGetImg(e) {
     this.btnBack.classList.remove('non-visible');
     e.target.classList.add('non-visible');
@@ -109,7 +105,7 @@ export default class ImgLoader {
       body.files.forEach((file) => {
         this.serverImgList.insertAdjacentHTML('beforeend', `
         <div class="load-item" data-name="${file.name}">
-          <a href="${file.src}">
+          <a href="" download="${file.src}">
             <img src="${file.src}" class="item-img">
           </a>
           <div class="load-item__close"></div>
@@ -143,7 +139,7 @@ export default class ImgLoader {
     e.target.classList.add('non-visible');
 
     const items = this.serverImgList.querySelectorAll('.load-item');
-    items.forEach(item => {
+    items.forEach((item) => {
       item.remove();
     });
 
@@ -157,17 +153,16 @@ export default class ImgLoader {
       body: this.formData,
     });
 
+    this.formData = new FormData();
+
     if (response.status === 204) {
       const loadItems = this.previewContainer.querySelectorAll('.load-item');
 
-      return loadItems.forEach(item => {
+      return loadItems.forEach((item) => {
         item.remove();
-      })
+      });
     }
-  }  
-  
-  
-
+  }
 
   onDragOverFileContainer(e) {
     e.preventDefault();

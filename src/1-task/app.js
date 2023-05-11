@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 /* eslint-disable import/no-extraneous-dependencies */
 const fs = require('fs');
 const path = require('path');
@@ -9,11 +10,12 @@ const multer = require('@koa/multer');
 
 const upload = multer();
 
-const { getTickets } = require('./controllers/getTickets');
-const { patchTickets } = require('./controllers/patchTickets');
+const { allTickets } = require('./controllers/allTickets');
+const { ticketById } = require('./controllers/ticketById');
+const { addTicket } = require('./controllers/addTicket');
+const { statusTicket } = require('./controllers/statusTicket');
 const { deleteTicket } = require('./controllers/deleteTicket');
-const { newTicket } = require('./controllers/newTicket');
-const { saveFile } = require('./controllers/saveFile');
+const { editTicket } = require('./controllers/editTicket');
 
 const app = new Koa();
 
@@ -23,15 +25,13 @@ app.use(require('koa-bodyparser')());
 
 const router = new Router({ prefix: '/api' });
 
-router.get('/', getTickets);
+router.get('/allTickets', allTickets);
+router.get('/ticketById', ticketById);
+router.post('/addTicket', upload.none(), addTicket);
+router.patch('/statusTicket', statusTicket);
+router.patch('/editTicket', upload.none(), editTicket);
 
-
-router.patch('/', patchTickets);
-router.delete('/', deleteTicket);
-
-router.post('/', newTicket);
-
-
+router.delete('/deleteTicket', deleteTicket);
 
 // Задание №3
 router.post('/uploadFiles', upload.any(), async (ctx) => {
@@ -46,14 +46,14 @@ router.post('/uploadFiles', upload.any(), async (ctx) => {
   await write(ctx.files);
   ctx.status = 204;
 });
-router.post('/deleteFile', async (ctx, next) => {
+router.post('/deleteFile', async (ctx) => {
   const { file: fileName } = ctx.request.body;
 
   fs.unlinkSync(path.join(__dirname, 'public', 'img', fileName));
 
   ctx.status = 204;
 });
-router.get('/getImg', async (ctx, next) => {
+router.get('/getImg', async (ctx) => {
   const server = 'http://localhost:3000/img/';
   const response = [];
 

@@ -1,26 +1,26 @@
+/* eslint-disable class-methods-use-this */
 export default class Ticket {
   constructor(container, server) {
     this.container = document.querySelector(container);
-    this.newTicketBtn = this.container.querySelector('.new-ticket');
+    this.newTicketBtn = this.container.querySelector('.btn-new-ticket');
 
     this.server = server;
     this.cache = null;
 
-
-
     this.onClickBtnNewTicket = this.onClickBtnNewTicket.bind(this);
     this.onClickBtnConfirmNewTicket = this.onClickBtnConfirmNewTicket.bind(this);
 
-    this.onClickConfirmTask = this.onClickConfirmTask.bind(this);
+    this.onClickBtnStatusTicket = this.onClickBtnStatusTicket.bind(this);
     this.onClickBtnDeleteTicket = this.onClickBtnDeleteTicket.bind(this);
-    
+
     this.onClickIconEditTicket = this.onClickIconEditTicket.bind(this);
     this.onSubmitEditTicket = this.onSubmitEditTicket.bind(this);
 
     this.onClickBtnConfirmDeleteTicket = this.onClickBtnConfirmDeleteTicket.bind(this);
-    this.onClickBtnCancelDeleteTicket = this.onClickBtnCancelDeleteTicket.bind(this);
+    this.onClickBtnCancelNewOrEditTicket = this.onClickBtnCancelNewOrEditTicket.bind(this);
 
-    this.onClickNameTicket = this.onClickNameTicket.bind(this);
+    this.onClickTitleTicket = this.onClickTitleTicket.bind(this);
+    this.onClickBtnCancelDeleteTicket = this.onClickBtnCancelDeleteTicket.bind(this);
   }
 
   start() {
@@ -32,38 +32,23 @@ export default class Ticket {
   async init() {
     const table = this.container.querySelector('.tickets-list');
 
-    const response = await fetch(`${this.server}?method=allTickets`);
-    const body = await response.json();
+    const response = await fetch(`${this.server}allTickets`);
 
-    if (body.tickets.length === 0) {
-      return;
+    if (response.status === 200) {
+      const body = await response.json();
+
+      if (body.tickets.length === 0) {
+        return;
+      }
+
+      body.tickets.forEach((ticket) => {
+        this.showTicket(ticket, table);
+      });
     }
-
-    body.tickets.forEach((ticket) => {
-      this.showTicket(ticket, table);
-    });
-
-    // const xhr = new XMLHttpRequest();
-
-    // const parametrs = '?method=allTickets';
-    // xhr.open('GET', this.server + parametrs);
-
-    // xhr.onreadystatechange = function () {
-    //   if (xhr.readyState !== 4) return;
-
-    //   const response = JSON.parse(xhr.responseText);
-
-    //   response.tickets.forEach((ticket) => {
-    //     this.showTicket(ticket, table);
-    //   });
-    // }.bind(this);
-
-    // xhr.send();
   }
 
-
   showTicket(ticket, parentElem) {
-    const status = ticket.status ? 'class="done-confirm confirm-background"' : 'class="done-confirm"';
+    const status = ticket.status ? 'class="btn-status status-background"' : 'class="btn-status"';
 
     parentElem.insertAdjacentHTML('beforeend', `
       <tr class="list-item" data-id="${ticket.id}">
@@ -77,228 +62,142 @@ export default class Ticket {
             ${ticket.created}
         </td>
         <td class="item-setting">
-          <input type="button" class="setting-edit">
-          <input type="button" class="setting-delete">
+          <input type="button" class="btn-edit">
+          <input type="button" class="btn-delete">
         </td>
       </tr>
     `);
 
     const tr = parentElem.lastChild;
-    const confirmBtn = tr.querySelector('.done-confirm');
-    const deleteBtn = tr.querySelector('.setting-delete');
-    const editBtn = tr.querySelector('.setting-edit');
+    const btnStatus = tr.querySelector('.btn-status');
+    const btnDelete = tr.querySelector('.btn-delete');
+    const btnEdit = tr.querySelector('.btn-edit');
     const itemTitle = tr.querySelector('.item-title');
 
-    confirmBtn.addEventListener('click', this.onClickConfirmTask);
-    editBtn.addEventListener('click', this.onClickIconEditTicket);
-    deleteBtn.addEventListener('click', this.onClickBtnDeleteTicket);
-    itemTitle.addEventListener('click', this.onClickNameTicket);
+    btnStatus.addEventListener('click', this.onClickBtnStatusTicket);
+    btnEdit.addEventListener('click', this.onClickIconEditTicket);
+    btnDelete.addEventListener('click', this.onClickBtnDeleteTicket);
+    itemTitle.addEventListener('click', this.onClickTitleTicket);
   }
 
-  createModalWindow(parent) {
-    parent.insertAdjacentHTML('beforeend', `
-      <form name="new-form" class="modal delete-ticket">
-        <h1 class="modal-title">Добавить тикет</h1>
+  createFormNewOrEditTicket(parent, typeTicket, value) {
+    let datasetId = '';
+    let nameValue = '';
+    let descriptionValue = '';
+    let handler = this.onClickBtnConfirmNewTicket;
 
-        <label for="short-description">Краткое описание</label>
-        <input name="short-description" id="short-description" class="short-description" type="text" required>
+    if (typeTicket === 'edit-ticket') {
+      datasetId = `data-id="${value.id}"`;
+      nameValue = `value="${value.name}"`;
+      descriptionValue = `${value.description}`;
+      handler = this.onSubmitEditTicket;
+    }
+
+    parent.insertAdjacentHTML('beforeend', `
+      <form name="${typeTicket}" class="modal form-${typeTicket}" ${datasetId}>
+        <h1 class="form-title">Добавить тикет</h1>
+
+        <label for="name">Краткое описание</label>
+        <input name="name" id="name" class="name" type="text" required ${nameValue}>
 
         <label for="description">Подробное описание</label>
-        <textarea name="description" id="description" class="description" required></textarea>
+        <textarea name="description" id="description" class="description" required>${descriptionValue}</textarea>
 
         <input name="btn-cancel" type="button" class="modal-btn btn-cancel" value="Отмена">
         <input type="submit" class="modal-btn btn-confirm" value="Ок">
-        </form>
+      </form>
     `);
 
-    const form = document.forms['new-form'];
-    const cancelBtn = form.elements['btn-cancel'];
+    const form = document.forms[typeTicket];
+    const btnCancel = form.elements['btn-cancel'];
 
-    cancelBtn.addEventListener('click', this.onClickBtnCancelDeleteTicket);
-    form.addEventListener('submit', this.onClickBtnConfirmNewTicket);
+    btnCancel.addEventListener('click', this.onClickBtnCancelNewOrEditTicket);
+    form.addEventListener('submit', handler);
   }
 
-  onClickBtnNewTicket(e) {
-    this.createModalWindow(this.container);
+  createModalDeleteTicket(parent, target) {
+    const tr = target.closest('tr');
+    const { id } = tr.dataset;
+
+    parent.insertAdjacentHTML('beforeend', `
+      <div class="modal modal-delete-ticket">
+        <h1 class="modal-title">Удалить тикет</h1>
+
+        <p class="modal-text">
+          Вы уверены, что хотите удалить тикет? Это действие необратимо.
+        </p>
+
+        <input name="btn-cancel" type="button" class="modal-btn btn-cancel" value="Отмена">
+        <input type="button" class="modal-btn btn-confirm" value="Ок" data-id="${id}">
+      </div>
+    `);
+
+    const modal = parent.querySelector('.modal-delete-ticket');
+    const btnCancel = modal.querySelector('.btn-cancel');
+    const btnConfirm = modal.querySelector('.btn-confirm');
+
+    btnCancel.addEventListener('click', this.onClickBtnCancelDeleteTicket);
+    btnConfirm.addEventListener('click', this.onClickBtnConfirmDeleteTicket);
+  }
+
+  // New Ticket Btn
+  onClickBtnNewTicket() {
+    this.createFormNewOrEditTicket(this.container, 'new-ticket');
   }
 
   async onClickBtnConfirmNewTicket(e) {
     e.preventDefault();
 
-    const form = document.forms['new-form'];
+    const form = document.forms['new-ticket'];
     const formData = new FormData(form);
 
-    const name = formData.get('short-description');
-    const description = formData.get('description');
-
-    const response = await fetch(`${this.server}?method=addTicket`, {
+    const response = await fetch(`${this.server}addTicket`, {
       method: 'POST',
+      body: formData,
+    });
+
+    if (response.status === 200) {
+      const body = await response.json();
+      const table = this.container.querySelector('.tickets-list');
+
+      this.showTicket(body.ticket, table);
+      form.remove();
+    }
+  }
+
+  onClickBtnCancelNewOrEditTicket(e) {
+    this.cache = null;
+    const form = e.target.closest('form');
+    return form.remove();
+  }
+
+  // Click ico btn - status, delete, edit and click title ticket:
+  //
+  // *** Ticket ico-btn - status
+  async onClickBtnStatusTicket(e) {
+    const { target } = e;
+    const tr = target.closest('tr');
+
+    const status = !!target.classList.contains('status-background');
+
+    const response = await fetch(`${this.server}statusTicket`, {
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json;charset=utf-8',
       },
       body: JSON.stringify({
-        name,
-        description,
+        id: tr.dataset.id,
+        status,
       }),
     });
 
-    const body = await response.json();
-
-    const table = this.container.querySelector('.tickets-list');
-
-    this.showTicket(body.ticket, table);
-    form.remove();
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-  onClickConfirmTask(e) {
-    const { target } = e;
-    const td = target.parentNode;
-    const tr = td.parentNode;
-
-    const state = !!target.classList.contains('confirm-background');
-
-    const parametrs = `?method=ticketConfirm&id=${tr.dataset.id}&state=${state}`;
-    const xhr = new XMLHttpRequest();
-
-    xhr.open('PATCH', this.server + parametrs);
-
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-
-      const response = JSON.parse(xhr.responseText);
-
-      if (response.status === 'Ok') {
-        target.classList.toggle('confirm-background');
-      }
-    };
-
-    xhr.send();
-  }
-
-  // Модальное окно редактирования тикета
-  async showModalWindowEditTicket(parent, target) {
-    try {
-      const tr = target.closest('tr');
-      const { id } = tr.dataset;
-
-      const response = await fetch(`${this.server}?method=ticketById&id=${id}`, {
-        method: 'GET',
-      });
-      const body = await response.json();
-
-      this.cache = {
-        id,
-        name: body.tickets.name,
-        description: body.tickets.description,
-      };
-
-      parent.insertAdjacentHTML('beforeend', `
-        <form name="edit-form" class="ticket__modal" data-id="${id}">
-            <h1 class="modal-title">Добавить тикет</h1>
-
-            <label for="short-description">Краткое описание</label>
-            <input name="short-description" id="short-description" class="short-description" type="text"
-            value="${body.tickets.name}">
-
-            <label for="description">Подробное описание</label>
-            <textarea name="description" id="description" class="description">${body.tickets.description}</textarea>
-
-            <input name="btn-cancel" type="button" class="modal-btn btn-cancel" value="Отмена">
-            <input type="submit" class="modal-btn btn-confirm" value="Ок">
-
-        </form>
-      `);
-      // parent.insertAdjacentHTML('beforeend', '<div class="global"></div>');
-
-      const form = document.forms['edit-form'];
-      const cancelBtn = form.elements['btn-cancel'];
-
-      cancelBtn.addEventListener('click', this.onClickBtnCancelDeleteTicket);
-      form.addEventListener('submit', this.onSubmitEditTicket);
-    } catch (e) {
-      return e.message;
+    if (response.status === 204) {
+      target.classList.toggle('status-background');
     }
   }
 
-  onClickIconEditTicket(e) {
-    return this.showModalWindowEditTicket(this.container, e.target);
-  }
-
-  async onSubmitEditTicket(e) {
-    e.preventDefault();
-
-    const formData = new FormData(e.target);
-
-    const { id } = e.target.dataset;
-    const name = formData.get('short-description');
-    const description = formData.get('description');
-
-    if (this.cache.name === name && this.cache.description === description) {
-      e.target.remove();
-      this.cache = null;
-
-      return;
-    }
-
-    try {
-      const response = await fetch(`${this.server}?method=editTicket&id=${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json;charset=utf-8',
-        },
-        body: JSON.stringify({
-          id,
-          name,
-          description,
-        }),
-      });
-      const body = await response.json();
-      console.log(body);
-
-      if (body.status === 'Ok') {
-        const { name: newName, description: newDescription } = body.tickets[0];
-        const trAll = this.container.querySelectorAll('tr');
-        const tr = [...trAll].find((elm) => elm.dataset.id === id);
-        const td = tr.querySelector('.item-title');
-
-        td.textContent = newName;
-
-        const tdText = td.querySelector('.item-text');
-        if (tdText) {
-          tdText.textContent = newDescription;
-        }
-
-        this.cache = null;
-        e.target.remove();
-        return;
-      }
-    } catch (e) {
-      return e.message;
-    }
-  }
-
-
-
-
-/*
-__________________________________________________________
-__________________________________________________________
-__________________________________________________________
-Отображение полного описания тикета
-*/
-
-  async onClickNameTicket(e) {
+  // *** Title ticket
+  async onClickTitleTicket(e) {
     const { target } = e;
     const tr = target.closest('tr');
     const itemText = tr.querySelector('.item-text');
@@ -310,97 +209,106 @@ __________________________________________________________
 
     const { id } = tr.dataset;
 
-    const response = await fetch(`${this.server}?method=ticketById&id=${id}`, {
+    const response = await fetch(`${this.server}ticketById?id=${id}`, {
       method: 'GET',
     });
     const body = await response.json();
 
-    if (body.status === 'Ok') {
+    if (response.status === 200) {
       target.insertAdjacentHTML('beforeend', `
-        <p class="item-text">${body.tickets.description}</p>
+        <p class="item-text">${body.ticket.description}</p>
       `);
     }
   }
 
-
-
-
-
-
-
-
-/*
-__________________________________________________________
-__________________________________________________________
-__________________________________________________________
-
-*/
-
-  // Модальное окно удаления тикета
+  // *** Ticket ico-btn - delete
   onClickBtnDeleteTicket(e) {
-    return this.showModalWindowDeleteTicket(this.container, e.target);
-  }
-
-  onClickBtnConfirmDeleteTicket(e) {
-    e.preventDefault();
-
-    const { id } = e.target.dataset;
-
-    const xhr = new XMLHttpRequest();
-    const parametrs = `?method=deleteTicket&id=${id}`;
-    xhr.open('DELETE', this.server + parametrs);
-
-    xhr.responseType = 'json';
-
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-
-      const res = xhr.response;
-
-      if (res.status.code === 200) {
-        const tr = this.container.querySelectorAll('tr');
-
-        tr.forEach((row) => {
-          if (row.dataset.id === id) {
-            row.remove();
-          }
-        });
-      }
-    }.bind(this);
-
-    xhr.send();
-
-    return document.forms['delete-form'].remove();
+    return this.createModalDeleteTicket(this.container, e.target);
   }
 
   onClickBtnCancelDeleteTicket(e) {
-    this.cache = null;
-    const form = e.target.closest('form');
-    return form.remove();
+    const modal = e.target.closest('div');
+    return modal.remove();
   }
 
-  showModalWindowDeleteTicket(parent, target) {
-    const tr = target.closest('tr');
+  async onClickBtnConfirmDeleteTicket(e) {
+    const modal = e.target.closest('div');
+    const { id } = e.target.dataset;
+
+    const response = await fetch(`${this.server}deleteTicket?id=${id}`, {
+      method: 'DELETE',
+    });
+
+    if (response.status === 204) {
+      const tr = this.container.querySelectorAll('tr');
+
+      tr.forEach((row) => {
+        if (row.dataset.id === id) {
+          row.remove();
+        }
+      });
+    }
+    return modal.remove();
+  }
+
+  // *** Ticket ico-btn - edit
+  async onClickIconEditTicket(e) {
+    const tr = e.target.closest('tr');
     const { id } = tr.dataset;
 
-    parent.insertAdjacentHTML('beforeend', `
-      <form name="delete-form" class="modal delete-ticket">
-        <h1 class="modal-title">Добавить тикет</h1>
+    const response = await fetch(`${this.server}ticketById?id=${id}`, {
+      method: 'GET',
+    });
 
-        <p class="modal-text">
-          Вы уверены, что хотите удалить тикет? Это действие необратимо.
-        </p>
+    if (response.status === 200) {
+      const body = await response.json();
 
-        <input name="btn-cancel" type="button" class="modal-btn btn-cancel" value="Отмена">
-        <input name="btn-confirm" type="button" class="modal-btn btn-confirm" value="Ок" data-id="${id}">
-      </form>
-    `);
+      this.cache = {
+        id,
+        name: body.ticket.name,
+        description: body.ticket.description,
+      };
 
-    const form = document.forms['delete-form'];
-    const cancelBtn = form.elements['btn-cancel'];
-    const confirmBtn = form.elements['btn-confirm'];
+      this.createFormNewOrEditTicket(this.container, 'edit-ticket', body.ticket);
+    }
+  }
 
-    cancelBtn.addEventListener('click', this.onClickBtnCancelDeleteTicket);
-    confirmBtn.addEventListener('click', this.onClickBtnConfirmDeleteTicket);
+  async onSubmitEditTicket(e) {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+
+    const { id } = e.target.dataset;
+
+    const name = formData.get('name');
+    const description = formData.get('description');
+
+    if (this.cache.name === name && this.cache.description === description) {
+      e.target.remove();
+      this.cache = null;
+
+      return;
+    }
+
+    const response = await fetch(`${this.server}editTicket?id=${id}`, {
+      method: 'PATCH',
+      body: formData,
+    });
+
+    if (response.status === 204) {
+      const trAll = this.container.querySelectorAll('tr');
+      const tr = [...trAll].find((elm) => elm.dataset.id === id);
+      const td = tr.querySelector('.item-title');
+
+      td.textContent = name;
+
+      const tdText = td.querySelector('.item-text');
+      if (tdText) {
+        tdText.textContent = description;
+      }
+
+      this.cache = null;
+      e.target.remove();
+    }
   }
 }

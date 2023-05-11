@@ -1,5 +1,5 @@
 {
-  "name": "Working-with-HTTP",
+  "name": "working-with-http",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -43,7 +43,6 @@
     "koa": "^2.14.2",
     "koa-body": "^6.0.1",
     "koa-bodyparser": "^4.4.0",
-    "koa-multer": "^1.0.2",
     "koa-router": "^12.0.0",
     "koa-static": "^5.0.0",
     "multer": "^1.4.5-lts.1",
